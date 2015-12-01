@@ -19,18 +19,25 @@
             </intent-filter>
         </activity>
         <!-- required to scan for and connect to Estimote Beacons via Bluetooth -->
-        <uses-permission android:name="android.permission.BLUETOOTH"/>
-        <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
+        <uses-permission android:name="android.permission.BLUETOOTH" />
+        <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
 
         <!-- required to access Estimote Cloud -->
-        <uses-permission android:name="android.permission.INTERNET"/>
-        <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-        <uses-permission android:name="android.permission."/>
+        <uses-permission android:name="android.permission.INTERNET" />
+        <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+        <uses-permission android:name="android.permission." />
         <uses-permission android:name="android.permission.VIBRATE" />
+
         <receiver
-            android:name=".NotificationBroadcastReceiver"
+            android:name=".services.NotificationBroadcastReceiver"
             android:exported="false" >
         </receiver>
+
+        <activity
+            android:name=".services.SettingsActivity"
+            android:label="@string/title_activity_settings"
+            android:theme="@style/AppTheme.NoActionBar" >
+        </activity>
     </application>
 
 </manifest>

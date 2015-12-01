@@ -1,17 +1,13 @@
 package com.example.maciek.beacony;
 
-import android.app.Notification;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.media.RingtoneManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.app.NotificationCompat;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.view.Menu;
@@ -19,7 +15,6 @@ import android.view.MenuItem;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.estimote.sdk.Beacon;
@@ -28,6 +23,9 @@ import com.estimote.sdk.Region;
 import com.example.maciek.beacony.dto.ContentDTO;
 import com.example.maciek.beacony.services.NotificationHelper;
 import com.example.maciek.beacony.services.ReqService;
+import com.example.maciek.beacony.services.Settings;
+import com.example.maciek.beacony.services.SettingsActivity;
+import com.example.maciek.beacony.services.SettingsHelper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.net.SocketTimeoutException;
@@ -39,9 +37,6 @@ import java.util.Map;
 public class MainActivity extends AppCompatActivity {
     Beacon beacon = null;
     BeaconManager beaconManager;
-    TextView textViewMinor;
-    TextView textViewMajor;
-    TextView textViewTop;
     ReqService reqService;
     WebView webView;
     ProgressBar progressBar;
@@ -49,6 +44,7 @@ public class MainActivity extends AppCompatActivity {
     private NotificationManager notificationManager;
     ArrayList<ContentDTO> contentDTOs;
     ContentDTO currentContentDTO = null;
+    Settings settings = null;
 
     Map<Beacon, Date> beaconsCache;
 
@@ -59,12 +55,17 @@ public class MainActivity extends AppCompatActivity {
             webView.setWebViewClient(new WebViewClient());
             webView.loadUrl(currentContentDTO.getUrl());
         }
+        settings = SettingsHelper.loadSettings(getApplicationContext());
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         List<ContentDTO> notifContentDTOs = (List<ContentDTO>) getIntent().getSerializableExtra("contents");
+        if(currentContentDTO == null && contentDTOs == null && notifContentDTOs == null) {
+            // TODO uncomments
+//            showSettings();
+        }
         if(notifContentDTOs != null) {
             currentContentDTO = notifContentDTOs.get(0);
             notifContentDTOs.remove(0);
@@ -88,16 +89,13 @@ public class MainActivity extends AppCompatActivity {
         notificationManager =
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         reqService = new ReqService();
-        textViewMajor = (TextView) findViewById(R.id.editTextMajor);
-        textViewMinor = (TextView) findViewById(R.id.editTextMinor);
-        textViewTop = (TextView) findViewById(R.id.textView2);
         webView = (WebView) findViewById(R.id.webView);
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
         beaconManager = new BeaconManager(getApplicationContext());
         beaconManager.connect(new BeaconManager.ServiceReadyCallback() {
             @Override
             public void onServiceReady() {
-                Toast.makeText(getApplicationContext(), "START MONITORING", Toast.LENGTH_SHORT).show();
+//                Toast.makeText(getApplicationContext(), "START MONITORING", Toast.LENGTH_SHORT).show();
                 beaconManager.startMonitoring(new Region(
                         "monitored region",
                         null,
@@ -111,7 +109,7 @@ public class MainActivity extends AppCompatActivity {
         beaconManager.setMonitoringListener(new BeaconManager.MonitoringListener() {
             @Override
             public void onEnteredRegion(Region region, List<Beacon> list) {
-                Toast.makeText(getApplicationContext(), "enter", Toast.LENGTH_SHORT).show();
+//                Toast.makeText(getApplicationContext(), "enter", Toast.LENGTH_SHORT).show();
                 beacon = list.get(0);
                 new RequestAsync().execute();
 
@@ -119,7 +117,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onExitedRegion(Region region) {
-                Toast.makeText(getApplicationContext(), "exit", Toast.LENGTH_SHORT).show();
+//                Toast.makeText(getApplicationContext(), "exit", Toast.LENGTH_SHORT).show();
             }
         });
         beaconManager.setRangingListener(new BeaconManager.RangingListener() {
@@ -147,6 +145,9 @@ public class MainActivity extends AppCompatActivity {
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
+        if(item.getItemId() == R.id.action_settings) {
+            showSettings();
+        }
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
@@ -163,7 +164,7 @@ public class MainActivity extends AppCompatActivity {
 //        webView.loadUrl(resourceUrl);
 //        Toast.makeText(getApplicationContext(), "DUPA", Toast.LENGTH_SHORT).show();
 //        reqService.requestForContent("A", major, minor);
-        Toast.makeText(getApplicationContext(), "enter", Toast.LENGTH_SHORT).show();
+//        Toast.makeText(getApplicationContext(), "enter", Toast.LENGTH_SHORT).show();
         new RequestAsync().execute();
     }
 
@@ -201,9 +202,9 @@ public class MainActivity extends AppCompatActivity {
             ObjectMapper objectMapper = new ObjectMapper();
             try {
                 if (beacon != null) { //TODO to test, remove it
-                    contentDTOs = reqService.requestForContent(beacon.getProximityUUID().toString(), new Integer(beacon.getMajor()).toString(), new Integer(beacon.getMinor()).toString());
+                    contentDTOs = reqService.requestForContent(getApplicationContext(), beacon.getProximityUUID().toString(), new Integer(beacon.getMajor()).toString(), new Integer(beacon.getMinor()).toString());
                 } else {
-                    contentDTOs = reqService.requestForContent("test1", "test2", "test3");
+                    contentDTOs = reqService.requestForContent(getApplicationContext(), "test1", "test2", "test3");
                 }
                 if(contentDTOs == null) {
                     noContent = true;
@@ -216,5 +217,10 @@ public class MainActivity extends AppCompatActivity {
             }
             return null;
         }
+    }
+
+    public void showSettings() {
+        Intent intent = new Intent(this, SettingsActivity.class);
+        startActivity(intent);
     }
 }

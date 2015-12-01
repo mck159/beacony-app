@@ -1,6 +1,6 @@
 package com.example.maciek.beacony.services;
 
-import android.util.Log;
+import android.content.Context;
 
 import com.example.maciek.beacony.dto.ContentDTO;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,22 +12,18 @@ import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
-import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.security.MessageDigest;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
 
 /**
  * Created by maciek on 2015-11-15.
  */
 public class ReqService {
-    public ArrayList<ContentDTO>     requestForContent(String uuid, String major, String minor) throws SocketTimeoutException {
-        String json = requestForContentString(uuid, major,minor);
+    public ArrayList<ContentDTO> requestForContent(Context ctx, String uuid, String major, String minor) throws SocketTimeoutException {
+        Settings settings = SettingsHelper.loadSettings(ctx);
+        String json = requestForContentString(settings.getServiceUrl(), uuid, major,minor);
         if(json == null) {
             return null;
         }
@@ -45,10 +41,10 @@ public class ReqService {
         return null;
     }
 
-    private String requestForContentString(String uuid, String major, String minor) throws SocketTimeoutException {
+    private String requestForContentString(String servicesUrl, String uuid, String major, String minor) throws SocketTimeoutException {
 
         try {
-            URL obj = new URL(String.format("http://192.168.169.103:3000/beacon/%s/content", getSum(uuid, major, minor)));
+            URL obj = new URL(String.format("%s/beacon/%s/content", servicesUrl, getSum(uuid, major, minor)));
 //            obj = new URL("http://192.168.169.103:3000/dupa");
             HttpURLConnection con = (HttpURLConnection) obj.openConnection();
             con.setRequestMethod("GET");

@@ -9,7 +9,6 @@ import android.media.RingtoneManager;
 import android.support.v7.app.NotificationCompat;
 
 import com.example.maciek.beacony.MainActivity;
-import com.example.maciek.beacony.NotificationBroadcastReceiver;
 import com.example.maciek.beacony.R;
 import com.example.maciek.beacony.dto.ContentDTO;
 
@@ -28,20 +27,25 @@ public class NotificationHelper {
         nextNotifIntent.putExtra("contents", contents);
         nextNotifIntent.putExtra("lastContent", lastContent);
         nextNotifIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        PendingIntent pendingIntent = PendingIntent.getActivity(ctx, 0 , notifIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent pendingIntent = PendingIntent.getActivity(ctx, 0, notifIntent, PendingIntent.FLAG_UPDATE_CURRENT);
         PendingIntent nextPendingIntent = PendingIntent.getBroadcast(ctx, 0, nextNotifIntent, PendingIntent.FLAG_UPDATE_CURRENT);
         NotificationCompat.Builder mNotifyBuilder = (NotificationCompat.Builder) new NotificationCompat.Builder(ctx)
                 .setContentTitle(title)
                 .setContentText(text)
                 .setSmallIcon(R.drawable.ikonka)
-                .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
                 .setDeleteIntent(nextPendingIntent)
                 .setContentIntent(pendingIntent);
+        Settings settings = SettingsHelper.loadSettings(ctx);
+        if(settings.isSounds()) {
+            mNotifyBuilder.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION));
+        }
+        if(settings.isVibrations()) {
+            mNotifyBuilder.setVibrate(new long[]{0, 100, 200, 300});
+        }
 
         NotificationManager notificationManager =
                 (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
         Notification notification = mNotifyBuilder.build();
-        notification.defaults = Notification.DEFAULT_ALL;
         notificationManager.notify(1, notification);
     }
 }

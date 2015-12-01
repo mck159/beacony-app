@@ -1,4 +1,4 @@
-package com.example.maciek.beacony;
+package com.example.maciek.beacony.services;
 
 import android.app.IntentService;
 import android.content.Intent;

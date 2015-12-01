@@ -1,4 +1,4 @@
-package com.example.maciek.beacony;
+package com.example.maciek.beacony.services;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
