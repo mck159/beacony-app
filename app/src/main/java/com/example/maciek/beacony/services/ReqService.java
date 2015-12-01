@@ -17,6 +17,7 @@ import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.security.MessageDigest;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -25,7 +26,7 @@ import java.util.List;
  * Created by maciek on 2015-11-15.
  */
 public class ReqService {
-    public List<ContentDTO> requestForContent(String uuid, String major, String minor) throws SocketTimeoutException {
+    public ArrayList<ContentDTO>     requestForContent(String uuid, String major, String minor) throws SocketTimeoutException {
         String json = requestForContentString(uuid, major,minor);
         if(json == null) {
             return null;
@@ -33,7 +34,11 @@ public class ReqService {
         ObjectMapper objectMapper = new ObjectMapper();
         try {
             ContentDTO[] contentDTO = objectMapper.readValue(json, ContentDTO[].class);
-            return Arrays.asList(contentDTO);
+            ArrayList<ContentDTO> result = new ArrayList<>();
+            for(ContentDTO contentDTO1 : contentDTO) {
+                result.add(contentDTO1);
+            }
+            return result;
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -43,7 +48,8 @@ public class ReqService {
     private String requestForContentString(String uuid, String major, String minor) throws SocketTimeoutException {
 
         try {
-            URL obj = new URL(String.format("http://192.168.169.103:3000/beacon/%s/content?dt=%s", getSum(uuid, major, minor), new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date())));
+            URL obj = new URL(String.format("http://192.168.169.103:3000/beacon/%s/content", getSum(uuid, major, minor)));
+//            obj = new URL("http://192.168.169.103:3000/dupa");
             HttpURLConnection con = (HttpURLConnection) obj.openConnection();
             con.setRequestMethod("GET");
             con.setConnectTimeout(5000);

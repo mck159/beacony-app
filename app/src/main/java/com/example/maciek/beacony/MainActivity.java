@@ -17,6 +17,7 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -25,10 +26,12 @@ import com.estimote.sdk.Beacon;
 import com.estimote.sdk.BeaconManager;
 import com.estimote.sdk.Region;
 import com.example.maciek.beacony.dto.ContentDTO;
+import com.example.maciek.beacony.services.NotificationHelper;
 import com.example.maciek.beacony.services.ReqService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.net.SocketTimeoutException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -44,21 +47,28 @@ public class MainActivity extends AppCompatActivity {
     ProgressBar progressBar;
     String resourceUrl;
     private NotificationManager notificationManager;
+    ArrayList<ContentDTO> contentDTOs;
+    ContentDTO currentContentDTO = null;
 
     Map<Beacon, Date> beaconsCache;
 
     @Override
     protected void onResume() {
         super.onResume();
-        if(resourceUrl != null) {
-            webView.loadUrl(resourceUrl);
+        if(currentContentDTO != null) {
+            webView.setWebViewClient(new WebViewClient());
+            webView.loadUrl(currentContentDTO.getUrl());
         }
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        List<ContentDTO> notifContentDTOs = (List<ContentDTO>) getIntent().getSerializableExtra("contents");
+        if(notifContentDTOs != null) {
+            currentContentDTO = notifContentDTOs.get(0);
+            notifContentDTOs.remove(0);
+        }
 
 
         setContentView(R.layout.activity_main);
@@ -90,12 +100,10 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(getApplicationContext(), "START MONITORING", Toast.LENGTH_SHORT).show();
                 beaconManager.startMonitoring(new Region(
                         "monitored region",
-//                        UUID.fromString("B9407F30-F5F8-466E-AFF9-25556B57FE6D"),
                         null,
                         null, null));
                 beaconManager.startRanging(new Region(
                         "monitored region",
-//                        UUID.fromString("B9407F30-F5F8-466E-AFF9-25556B57FE6D"),
                         null,
                         null, null));
             }
@@ -171,19 +179,11 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(Void aVoid) {
             Intent notifIntent = new Intent(getApplicationContext(), MainActivity.class);
-            PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 0 , notifIntent, 0);
-            NotificationCompat.Builder mNotifyBuilder = (NotificationCompat.Builder) new NotificationCompat.Builder(getApplicationContext())
-                    .setContentTitle("New Message")
-                    .setContentText("You've received new messages.")
-                    .setSmallIcon(R.drawable.ikonka)
-                    .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
-                    .setContentIntent(pendingIntent);
-
-            Notification notification = mNotifyBuilder.build();
-            notification.defaults = Notification.DEFAULT_ALL;
-            notificationManager.notify(1, notification);
+            Object x = contentDTOs;
+            NotificationHelper.createNotificationWithDeleteListener(getApplication(), "DUPA", "DUPA", contentDTOs, currentContentDTO);
 
             if(resourceUrl != null) {
+                webView.setWebViewClient(new WebViewClient());
                 webView.loadUrl(resourceUrl);
             }
             progressBar.setVisibility(ProgressBar.INVISIBLE);
@@ -200,17 +200,17 @@ public class MainActivity extends AppCompatActivity {
         protected Void doInBackground(Void... params) {
             ObjectMapper objectMapper = new ObjectMapper();
             try {
-                List<ContentDTO> contentDTOs;
                 if (beacon != null) { //TODO to test, remove it
                     contentDTOs = reqService.requestForContent(beacon.getProximityUUID().toString(), new Integer(beacon.getMajor()).toString(), new Integer(beacon.getMinor()).toString());
                 } else {
-                    contentDTOs = reqService.requestForContent("d96e0731be8d0f59f3ad85bf58602e71", "1729", "13915");
+                    contentDTOs = reqService.requestForContent("test1", "test2", "test3");
                 }
                 if(contentDTOs == null) {
                     noContent = true;
                     return null;
                 }
                 resourceUrl = contentDTOs.get(0).getUrl();
+                currentContentDTO = contentDTOs.get(0);
             } catch(SocketTimeoutException e) {
                 hasTimedOut = true;
             }
