@@ -3,6 +3,8 @@ package com.example.maciek.beacony.services;
 import android.content.Context;
 
 import com.example.maciek.beacony.dto.ContentDTO;
+import com.example.maciek.beacony.helpers.Settings;
+import com.example.maciek.beacony.helpers.SettingsHelper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.BufferedReader;
@@ -21,9 +23,9 @@ import java.util.ArrayList;
  * Created by maciek on 2015-11-15.
  */
 public class ReqService {
-    public ArrayList<ContentDTO> requestForContent(Context ctx, String uuid, String major, String minor) throws SocketTimeoutException {
+    public ArrayList<ContentDTO> requestForContent(Context ctx, double distance, String uuid, String major, String minor) throws SocketTimeoutException {
         Settings settings = SettingsHelper.loadSettings(ctx);
-        String json = requestForContentString(settings.getServiceUrl(), uuid, major,minor);
+        String json = requestForContentString(settings.getServiceUrl(), distance, uuid, major,minor);
         if(json == null) {
             return null;
         }
@@ -41,10 +43,10 @@ public class ReqService {
         return null;
     }
 
-    private String requestForContentString(String servicesUrl, String uuid, String major, String minor) throws SocketTimeoutException {
+    private String requestForContentString(String servicesUrl, double distance, String uuid, String major, String minor) throws SocketTimeoutException {
 
         try {
-            URL obj = new URL(String.format("%s/beacon/%s/content", servicesUrl, getSum(uuid, major, minor)));
+            URL obj = new URL(String.format("%s/beacon/%s/content?dist=%f", servicesUrl, getSum(uuid, major, minor), distance));
 //            obj = new URL("http://192.168.169.103:3000/dupa");
             HttpURLConnection con = (HttpURLConnection) obj.openConnection();
             con.setRequestMethod("GET");

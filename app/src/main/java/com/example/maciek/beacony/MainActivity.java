@@ -3,6 +3,8 @@ package com.example.maciek.beacony;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
@@ -20,15 +22,19 @@ import android.widget.Toast;
 import com.estimote.sdk.Beacon;
 import com.estimote.sdk.BeaconManager;
 import com.estimote.sdk.Region;
+import com.estimote.sdk.Utils;
 import com.example.maciek.beacony.dto.ContentDTO;
-import com.example.maciek.beacony.services.NotificationHelper;
+import com.example.maciek.beacony.helpers.NotificationHelper;
 import com.example.maciek.beacony.services.ReqService;
-import com.example.maciek.beacony.services.Settings;
-import com.example.maciek.beacony.services.SettingsActivity;
-import com.example.maciek.beacony.services.SettingsHelper;
+import com.example.maciek.beacony.helpers.Settings;
+import com.example.maciek.beacony.helpers.SettingsHelper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -40,13 +46,13 @@ public class MainActivity extends AppCompatActivity {
     ReqService reqService;
     WebView webView;
     ProgressBar progressBar;
-    String resourceUrl;
     private NotificationManager notificationManager;
     ArrayList<ContentDTO> contentDTOs;
     ContentDTO currentContentDTO = null;
     Settings settings = null;
 
     Map<Beacon, Date> beaconsCache;
+    Bitmap currentContentDTOBITMAP = null;
 
     @Override
     protected void onResume() {
@@ -110,7 +116,16 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onEnteredRegion(Region region, List<Beacon> list) {
 //                Toast.makeText(getApplicationContext(), "enter", Toast.LENGTH_SHORT).show();
-                beacon = list.get(0);
+                if(list == null || list.size() == 0) {
+                    return;
+                }
+                int max_power_beacon_id = 0;
+                for(int i = 0 ; i < list.size() ; i++) {
+                    if(list.get(i).getMeasuredPower() > list.get(i).getMeasuredPower()) {
+                        max_power_beacon_id = i;
+                    }
+                }
+                beacon = list.get(max_power_beacon_id);
                 new RequestAsync().execute();
 
             }
@@ -179,14 +194,13 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(Void aVoid) {
-            Intent notifIntent = new Intent(getApplicationContext(), MainActivity.class);
-            Object x = contentDTOs;
-            NotificationHelper.createNotificationWithDeleteListener(getApplication(), "DUPA", "DUPA", contentDTOs, currentContentDTO);
-
-            if(resourceUrl != null) {
+            // TODO
+            if(currentContentDTO != null) {
+                NotificationHelper.createNotificationWithDeleteListener(getApplicationContext(), currentContentDTOBITMAP, currentContentDTO.getName(), currentContentDTO.getDescription(), contentDTOs, currentContentDTO);
                 webView.setWebViewClient(new WebViewClient());
-                webView.loadUrl(resourceUrl);
+                webView.loadUrl(currentContentDTO.getUrl());
             }
+
             progressBar.setVisibility(ProgressBar.INVISIBLE);
 
             if(hasTimedOut) {
@@ -202,18 +216,22 @@ public class MainActivity extends AppCompatActivity {
             ObjectMapper objectMapper = new ObjectMapper();
             try {
                 if (beacon != null) { //TODO to test, remove it
-                    contentDTOs = reqService.requestForContent(getApplicationContext(), beacon.getProximityUUID().toString(), new Integer(beacon.getMajor()).toString(), new Integer(beacon.getMinor()).toString());
+                    contentDTOs = reqService.requestForContent(getApplicationContext(), Utils.computeAccuracy(beacon), beacon.getProximityUUID().toString(), new Integer(beacon.getMajor()).toString(), new Integer(beacon.getMinor()).toString());
                 } else {
-                    contentDTOs = reqService.requestForContent(getApplicationContext(), "test1", "test2", "test3");
+                    contentDTOs = reqService.requestForContent(getApplicationContext(), 1.0, "test1", "test2", "test3");
                 }
                 if(contentDTOs == null) {
                     noContent = true;
                     return null;
                 }
-                resourceUrl = contentDTOs.get(0).getUrl();
-                currentContentDTO = contentDTOs.get(0);
+                if(contentDTOs.size() != 0) {
+                    currentContentDTO = contentDTOs.get(0);
+                    currentContentDTOBITMAP = BitmapFactory.decodeStream((InputStream) new URL(currentContentDTO.getImgUrl()).getContent());
+                }
             } catch(SocketTimeoutException e) {
                 hasTimedOut = true;
+            } catch (Exception e) {
+                Toast.makeText(getApplicationContext(), "WRONG IMAGE", Toast.LENGTH_SHORT).show();
             }
             return null;
         }

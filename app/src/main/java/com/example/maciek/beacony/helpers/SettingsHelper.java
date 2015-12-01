@@ -1,4 +1,4 @@
-package com.example.maciek.beacony.services;
+package com.example.maciek.beacony.helpers;
 
 import android.content.Context;
 import android.content.SharedPreferences;

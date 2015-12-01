@@ -1,4 +1,4 @@
-package com.example.maciek.beacony.services;
+package com.example.maciek.beacony;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -11,6 +11,8 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.example.maciek.beacony.R;
+import com.example.maciek.beacony.helpers.Settings;
+import com.example.maciek.beacony.helpers.SettingsHelper;
 
 public class SettingsActivity extends AppCompatActivity {
     EditText editTextUrl;

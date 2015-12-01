@@ -1,4 +1,4 @@
-package com.example.maciek.beacony.services;
+package com.example.maciek.beacony.helpers;
 
 /**
  * Created by maciek on 2015-12-01.

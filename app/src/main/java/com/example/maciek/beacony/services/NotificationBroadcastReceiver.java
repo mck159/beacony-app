@@ -3,11 +3,11 @@ package com.example.maciek.beacony.services;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 
 import com.example.maciek.beacony.dto.ContentDTO;
-import com.example.maciek.beacony.services.NotificationHelper;
+import com.example.maciek.beacony.helpers.NotificationHelper;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 
 /**
@@ -21,9 +21,11 @@ public class NotificationBroadcastReceiver extends BroadcastReceiver {
             return;
         }
         ContentDTO lastContent = (ContentDTO) intent.getSerializableExtra("lastContent");
+        Bitmap picture = (Bitmap) intent.getParcelableExtra("picture");
         if(lastContent != null) {
             contents.remove(lastContent);
+            NotificationHelper.createNotificationWithDeleteListener(ctx, picture, lastContent.getName(), lastContent.getDescription(), contents, lastContent);
         }
-        NotificationHelper.createNotificationWithDeleteListener(ctx, "DUPA", "DUPA", contents, lastContent);
+
     }
 }

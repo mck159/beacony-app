@@ -1,4 +1,4 @@
-package com.example.maciek.beacony;
+package com.example.maciek.beacony.helpers;
 
 import com.estimote.sdk.Beacon;
 
